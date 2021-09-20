@@ -16,6 +16,7 @@
 
 ## Usage
   
+  [![watch the video]](https://youtu.be/FrJCjnAylQg)
   ![alt text](./assets/terminal_screenShot.jpeg)
 
   ---
