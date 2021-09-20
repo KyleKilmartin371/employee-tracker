@@ -13,13 +13,11 @@ function app() {
                 choices: [
                     'View Departments',
                     'Add Department',
-                    'Update Employee Title',
                     'View Job Titles',
                     'Add Job Title',
-                    'View Employees',
+                    'View Employee',
                     'Add Employee',
-                    'Update Employee Title',
-                    'Remove Employee',
+                    'Update Employee',
                     'Exit',
                 ],
                 validate: mainMenu => {
@@ -32,7 +30,6 @@ function app() {
                 },
             },
         ])
-        // Call function based on menu selection
         .then(function ({ mainMenu }) {
             switch (mainMenu) {
                 case 'View Departments':
@@ -51,7 +48,7 @@ function app() {
                     addTitle();
                     break;
 
-                case 'View Employees':
+                case 'View Employee':
                     employeeView();
                     break;
 
@@ -59,8 +56,8 @@ function app() {
                     addEmployee();
                     break;
 
-                case 'Update Employee Title':
-                    updateRole();
+                case 'Update Employee':
+                    updateTitle();
                     break;
 
                 case 'Remove Employee':
@@ -196,6 +193,157 @@ function addTitle() {
         });
       });
   }
+
+  // Update Employee Information
+
+function updateTitle() {
+  const titleData = [];
+  const titleNames = [];
+
+  const employeeData = [];
+  const employeeNames = [];
+
+  getTitles()
+    .then(data => {
+      for (let i = 0; i < data.length; i++) {
+        titleData.push(data[i]);
+        titleNames.push(data[i].title);
+      }
+
+      getEmployee()
+        .then(data => {
+          for (let i = 0; i < data.length; i++) {
+            employeeData.push(data[i]);
+            employeeNames.push(data[i].last_name);
+          }
+          updateEmployeeQuestions(
+            titleData,
+            titleNames,
+            employeeData,
+            employeeNames
+          );
+        })
+        .catch(err => {
+          console.log(err);
+        });
+    })
+    .catch(err => {
+      console.log(err);
+    });
+}
+
+function updateEmployeeQuestions(
+  titleData,
+  titleNames,
+  employeeData,
+  employeeNames
+) {
+  inquirer
+    .prompt([
+      {
+        type: 'list',
+        name: 'employee',
+        message: 'Which employee would you like to update?',
+        choices: employeeNames,
+        pageSize: 12,
+      },
+      {
+        type: 'list',
+        name: 'update',
+        message: 'What information would you like to update?',
+        choices: [`Employee's title`,
+                  // `Employee's manager`,
+                  'Cancel'],
+      },
+    ])
+    .then(answers => {
+      let employeeId;
+      for (let i = 0; i < employeeData.length; i++) {
+        if (answers.employee === employeeData[i].last_name) {
+          employeeId = employeeData[i].id;
+        }
+      }
+      if (answers.update === `Employee's title`) {
+        newTitle(employeeId, titleData, titleNames);
+      } 
+      else if (answers.update === `Employee's manager`) {
+        employeeNames.push('No Manager');
+        getManager(employeeId, employeeData, employeeNames);
+      } else {
+        app();
+      }
+    });
+}
+
+function newTitle(employeeId, titleData, titleNames) {
+  inquirer
+    .prompt([
+      {
+        type: 'list',
+        name: 'title',
+        message: `What is the employee's new job title?`,
+        choices: titleNames,
+        pageSize: 12,
+      },
+    ])
+    .then(answers => {
+      let titleId;
+      for (let i = 0; i < titleData.length; i++) {
+        if (answers.title === titleData[i].title) {
+          titleId = titleData[i].id;
+        }
+      }
+      updateEmployeetitle(employeeId, titleId);
+    });
+}
+
+function updateEmployeetitle(employeeId, titleId) {
+  db.query(
+    `UPDATE employee SET ? WHERE ?`,
+    [
+      {
+        title_id: titleId,
+      },
+      {
+        id: employeeId,
+      },
+    ],
+    (err, res) => {
+      if (err) throw err;
+      console.log(`You've successfully updated the employee's title`);
+      app();
+    }
+  );
+}
+
+
+function getTitles() {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT id, title AS 'title' FROM title ORDER BY title`,
+      (err, data) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(data);
+      }
+    );
+  });
+}
+
+function getEmployee() {
+  return new Promise((resolve, reject) => {
+    db.query(
+      `SELECT id, last_name FROM employee ORDER BY last_name`,
+      (err, data) => {
+        if (err) {
+          return reject(err);
+        }
+        return resolve(data);
+      }
+    );
+  });
+}
 
 
   //app startup
