@@ -17,7 +17,7 @@ function app() {
                     'Add Job Title',
                     'View Employee',
                     'Add Employee',
-                    'Update Employee',
+                    'Update Employee Title',
                     'Exit',
                 ],
                 validate: mainMenu => {
@@ -56,7 +56,7 @@ function app() {
                     addEmployee();
                     break;
 
-                case 'Update Employee':
+                case 'Update Employee Title':
                     updateTitle();
                     break;
 
@@ -251,8 +251,8 @@ function updateEmployeeQuestions(
         type: 'list',
         name: 'update',
         message: 'What information would you like to update?',
-        choices: [`Employee's title`,
-                  // `Employee's manager`,
+        choices: [`Employee's title`, 
+                  // `Employee's manager`, 
                   'Cancel'],
       },
     ])
@@ -265,8 +265,7 @@ function updateEmployeeQuestions(
       }
       if (answers.update === `Employee's title`) {
         newTitle(employeeId, titleData, titleNames);
-      } 
-      else if (answers.update === `Employee's manager`) {
+      } else if (answers.update === `Employee's manager`) {
         employeeNames.push('No Manager');
         getManager(employeeId, employeeData, employeeNames);
       } else {
@@ -316,6 +315,49 @@ function updateEmployeetitle(employeeId, titleId) {
   );
 }
 
+function getManager(employeeId, employeeData, employeeNames) {
+  inquirer
+    .prompt([
+      {
+        type: 'list',
+        name: 'manager',
+        message: `Who is this employee's new manager?`,
+        choices: employeeNames,
+        pageSize: 12,
+      },
+    ])
+    .then(answers => {
+      let managerId;
+      for (let i = 0; i < employeeData.length; i++) {
+        if (answers.manager === employeeData[i].last_name) {
+          managerId = employeeData[i].id;
+        }
+      }
+      if (answers.manager === 'No Manager') {
+        managerId = null;
+      }
+      updateEmployeeManager(employeeId, managerId);
+    });
+}
+
+function updateEmployeeManager(employeeId, managerId) {
+  db.query(
+    `UPDATE employee SET ? WHERE ?`,
+    [
+      {
+        manager_id: managerId,
+      },
+      {
+        id: employeeId,
+      },
+    ],
+    (err, res) => {
+      if (err) throw err;
+      console.log(`You've successfully changed employee's manager`);
+      app();
+    }
+  );
+}
 
 function getTitles() {
   return new Promise((resolve, reject) => {
