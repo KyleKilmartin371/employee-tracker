@@ -1,6 +1,6 @@
 const inquirer = require('inquirer');
 const db = require('./db/connection');
-const cTable = require('console.table');
+const consoleTable = require('console.table');
 
 //startup function
 function app() {
@@ -52,7 +52,7 @@ function app() {
                     break;
 
                 case 'View Employees':
-                    viewEmployees();
+                    employeeView();
                     break;
 
                 case 'Add Employee':
@@ -74,7 +74,7 @@ function app() {
         });
 }
 
-//department function
+//department view
 function departmentView() {
     const query = 'SELECT * FROM department';
     db.query(query, function (err, res) {
@@ -103,7 +103,7 @@ function addDepartment() {
       });
   }
 
-  // View Title
+  // Title View
 function titleView() {
     const query = 'SELECT * FROM title';
     db.query(query, function (err, res) {
@@ -141,6 +141,57 @@ function addTitle() {
         db.query(query, function (err, res) {
           if (err) throw err;
           console.log(`You've successfully added ${title}`);
+          app();
+        });
+      });
+  }
+
+  // Employee View
+  function employeeView() {
+    db.query(
+      'SELECT * FROM employee',
+      function (err, res) {
+        if (err) throw err;
+        console.table(res);
+        app();
+      }
+    );
+  }
+
+  // Add Employee
+  function addEmployee() {
+    inquirer
+      .prompt([
+        {
+          type: 'input',
+          message: "What is the employee's first name?",
+          name: 'firstName',
+        },
+        {
+          type: 'input',
+          message: "What is the employee's last name?",
+          name: 'lastName',
+        },
+        {
+          type: 'input',
+          message: "What is the employee's Job Title ID?",
+          name: 'titleID',
+        },
+        {
+          type: 'input',
+          message: "What is the employee's manager ID?",
+          name: 'managerID',
+        },
+      ])
+      .then(function (res) {
+        const firstName = res.firstName;
+        const lastName = res.lastName;
+        const titleID = res.titleID;
+        const managerID = res.managerID;
+        const query = `INSERT INTO employee (first_name, last_name, title_id, manager_id) VALUE("${firstName}", "${lastName}", "${titleID}", "${managerID}")`;
+        db.query(query, function (err, res) {
+          if (err) throw err;
+          console.log(`${firstName} ${lastName} has been added as an employee`);
           app();
         });
       });
